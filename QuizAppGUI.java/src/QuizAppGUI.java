@@ -17,11 +17,11 @@ public class QuizAppGUI extends JFrame {
     private final Color TEXT_COLOR = new Color(245, 245, 245);
     private final Color SECONDARY_TEXT = new Color(170, 170, 170);
 
-    private QuizManager quizManager = new QuizManager(); //[cite: 2, 3]
+    private QuizManager quizManager = new QuizManager();
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
 
-    private List<Question> currentQuiz; //[cite: 2]
+    private List<Question> currentQuiz;
     private int currentQuestionIndex = 0;
     private int score = 0;
 
@@ -35,7 +35,7 @@ public class QuizAppGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(BG_COLOR);
 
-        setExtendedState(JFrame.MAXIMIZED_BOTH); //[cite: 2]
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         mainPanel.setBackground(BG_COLOR);
         mainPanel.add(createMainMenuPanel(), "MainMenu");
@@ -114,7 +114,7 @@ public class QuizAppGUI extends JFrame {
 
         // Используем новые кастомные кнопки
         ModernButton btnTake = new ModernButton("НАЧАТЬ ТЕСТИРОВАНИЕ", ACCENT_COLOR, ACCENT_HOVER);
-        btnTake.addActionListener(e -> startQuiz()); //[cite: 2]
+        btnTake.addActionListener(e -> startQuiz());
         gbc.gridy = 2;
         gbc.insets = new Insets(10, 0, 10, 0);
         panel.add(btnTake, gbc);
@@ -125,7 +125,7 @@ public class QuizAppGUI extends JFrame {
         panel.add(btnCreate, gbc);
 
         ModernButton btnExit = new ModernButton("ВЫХОД", SECONDARY_BTN, SECONDARY_HOVER);
-        btnExit.addActionListener(e -> System.exit(0)); //[cite: 2]
+        btnExit.addActionListener(e -> System.exit(0));
         gbc.gridy = 4;
         panel.add(btnExit, gbc);
 
@@ -164,7 +164,7 @@ public class QuizAppGUI extends JFrame {
         JPanel btnPanel = new JPanel();
         btnPanel.setBackground(BG_COLOR);
         ModernButton btnNext = new ModernButton("ПОДТВЕРДИТЬ ОТВЕТ", ACCENT_COLOR, ACCENT_HOVER);
-        btnNext.addActionListener(e -> processAnswer()); //[cite: 2]
+        btnNext.addActionListener(e -> processAnswer());
         btnPanel.add(btnNext);
 
         panel.add(optionsPanel, BorderLayout.CENTER);
@@ -199,9 +199,8 @@ public class QuizAppGUI extends JFrame {
             List<String> opts = new ArrayList<>();
             for(JTextField f : tfOptions) opts.add(f.getText());
 
-            List<Question> list = quizManager.loadQuiz(); //[cite: 3]
-            list.add(new Question(tfQuestion.getText(), opts, 0));
-            quizManager.saveQuiz(list); //[cite: 3]
+            // Сохраняем вопрос в базу данных напрямую
+            quizManager.addQuestion(new Question(tfQuestion.getText(), opts, 0));
 
             // Очистка полей после сохранения
             tfQuestion.setText("");
@@ -236,7 +235,7 @@ public class QuizAppGUI extends JFrame {
     }
 
     private void startQuiz() {
-        currentQuiz = quizManager.loadQuiz(); //[cite: 3]
+        currentQuiz = quizManager.loadQuiz();
         if (currentQuiz.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Сначала добавьте вопросы в редакторе!");
             return;
@@ -248,7 +247,7 @@ public class QuizAppGUI extends JFrame {
     }
 
     private void showQuestion() {
-        Question q = currentQuiz.get(currentQuestionIndex); //[cite: 2]
+        Question q = currentQuiz.get(currentQuestionIndex);
         questionLabel.setText("<html><body style='text-align: center'>" + q.getText() + "</body></html>");
         for (int i = 0; i < 4; i++) {
             optionButtons[i].setText(q.getOptions().get(i));
@@ -267,7 +266,7 @@ public class QuizAppGUI extends JFrame {
         }
         if(selected == currentQuiz.get(currentQuestionIndex).getCorrectAnswer()) score++;
 
-        currentQuestionIndex++; 
+        currentQuestionIndex++;
         if(currentQuestionIndex < currentQuiz.size()) showQuestion();
         else {
             JOptionPane.showMessageDialog(this, "Результат: " + score + " из " + currentQuiz.size());

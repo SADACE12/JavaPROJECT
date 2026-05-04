@@ -48,8 +48,9 @@ public class QuizAppGUI extends JFrame {
     private JRadioButton[] optionButtons;
     private ButtonGroup optionsGroup;
 
-    // Кнопка доступна только преподавателю
+    // Кнопки доступны только преподавателю
     private ModernButton btnCreate;
+    private ModernButton btnEditor;
 
     // Редактор вопросов
     private DefaultListModel<Question> listModel;
@@ -132,6 +133,7 @@ public class QuizAppGUI extends JFrame {
         btnTeacher.addActionListener(e -> {
             isTeacher = true;
             btnCreate.setVisible(true);
+            btnEditor.setVisible(true);
             cardLayout.show(mainPanel, "MainMenu");
         });
         gbc.gridy = 1; panel.add(btnTeacher, gbc);
@@ -140,6 +142,7 @@ public class QuizAppGUI extends JFrame {
         btnStudent.addActionListener(e -> {
             isTeacher = false;
             btnCreate.setVisible(false);
+            btnEditor.setVisible(false);
             cardLayout.show(mainPanel, "MainMenu");
         });
         gbc.gridy = 2; panel.add(btnStudent, gbc);
@@ -180,12 +183,8 @@ public class QuizAppGUI extends JFrame {
         gbc.gridy = 3; panel.add(btnCreate, gbc);
 
         // Преподаватель: редактор вопросов
-        ModernButton btnEditor = new ModernButton("РЕДАКТОР ВОПРОСОВ", SECONDARY_BTN, SECONDARY_HOVER);
+        btnEditor = new ModernButton("РЕДАКТОР ВОПРОСОВ", SECONDARY_BTN, SECONDARY_HOVER);
         btnEditor.addActionListener(e -> {
-            if (!isTeacher) {
-                JOptionPane.showMessageDialog(this, "Только для преподавателей!");
-                return;
-            }
             refreshEditorList();
             cardLayout.show(mainPanel, "EditorScreen");
         });

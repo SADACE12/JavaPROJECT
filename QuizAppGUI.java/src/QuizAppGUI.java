@@ -1,248 +1,283 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public class QuizAppGUI extends JFrame {
-    private final QuizManager quizManager = new QuizManager();
-    private final CardLayout cardLayout = new CardLayout();
-    private final JPanel mainPanel = new JPanel(cardLayout);
+    // Цветовая палитра
+    private final Color BG_COLOR = new Color(18, 18, 18);
+    private final Color CARD_BG = new Color(30, 30, 30);
+    private final Color ACCENT_COLOR = new Color(110, 86, 232);       // Яркий фиолетовый
+    private final Color ACCENT_HOVER = new Color(130, 106, 255);      // Светлый фиолетовый (наведение)
+    private final Color SECONDARY_BTN = new Color(45, 45, 45);        // Темно-серый
+    private final Color SECONDARY_HOVER = new Color(60, 60, 60);      // Серый (наведение)
+    private final Color TEXT_COLOR = new Color(245, 245, 245);
+    private final Color SECONDARY_TEXT = new Color(170, 170, 170);
 
-    // Переменные для прохождения теста
-    private List<Question> currentQuiz;
+    private QuizManager quizManager = new QuizManager(); //[cite: 2, 3]
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel mainPanel = new JPanel(cardLayout);
+
+    private List<Question> currentQuiz; //[cite: 2]
     private int currentQuestionIndex = 0;
     private int score = 0;
 
-    // Элементы UI для теста
     private JLabel questionLabel;
+    private JPanel optionsPanel;
     private JRadioButton[] optionButtons;
     private ButtonGroup optionsGroup;
 
     public QuizAppGUI() {
-        setTitle("Система создания и прохождения тестов (Quiz Builder)");
-        setSize(500, 400);
+        setTitle("Quiz Builder Ultra");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // По центру экрана
+        getContentPane().setBackground(BG_COLOR);
 
-        // Создаем экраны
+        setExtendedState(JFrame.MAXIMIZED_BOTH); //[cite: 2]
+
+        mainPanel.setBackground(BG_COLOR);
         mainPanel.add(createMainMenuPanel(), "MainMenu");
         mainPanel.add(createAddQuestionPanel(), "AddQuestion");
         mainPanel.add(createTakeQuizPanel(), "TakeQuiz");
 
         add(mainPanel);
-        cardLayout.show(mainPanel, "MainMenu"); // Показываем главное меню при старте
+        cardLayout.show(mainPanel, "MainMenu");
     }
 
-    // --- Экран 1: Главное меню ---
+    // --- КАСТОМНАЯ КНОПКА СО СКРУГЛЕНИЯМИ ---
+    class ModernButton extends JButton {
+        private Color bgColor;
+        private Color hoverColor;
+
+        public ModernButton(String text, Color bg, Color hover) {
+            super(text);
+            this.bgColor = bg;
+            this.hoverColor = hover;
+
+            setForeground(Color.WHITE);
+            setFont(new Font("Segoe UI", Font.BOLD, 16));
+            setFocusPainted(false);
+            setContentAreaFilled(false); // Отключаем стандартный фон Windows
+            setBorderPainted(false);     // Отключаем стандартную рамку
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            // Фиксированный размер кнопок, чтобы они не растягивались слишком сильно
+            setPreferredSize(new Dimension(350, 50));
+
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { repaint(); }
+                public void mouseExited(MouseEvent e) { repaint(); }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            // Включаем сглаживание для красивых круглых краев
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (getModel().isRollover()) {
+                g2.setColor(hoverColor);
+            } else {
+                g2.setColor(bgColor);
+            }
+
+            // Рисуем фон со скруглением в 20 пикселей
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+            g2.dispose();
+            super.paintComponent(g); // Рисуем текст кнопки поверх фона
+        }
+    }
+
     private JPanel createMainMenuPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(BG_COLOR);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.insets = new Insets(10, 0, 10, 0);
 
-        JLabel titleLabel = new JLabel("Главное меню", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        JLabel title = new JLabel("QUIZ PRO");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 72));
+        title.setForeground(ACCENT_COLOR);
+        gbc.gridy = 0;
+        panel.add(title, gbc);
 
-        JButton btnCreate = new JButton("Создать вопрос (Администратор)");
-        JButton btnTake = new JButton("Пройти тестирование (Студент)");
-        JButton btnExit = new JButton("Выход");
+        JLabel subtitle = new JLabel("Создавайте и проходите тесты в одно касание");
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        subtitle.setForeground(SECONDARY_TEXT);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 60, 0); // Больший отступ снизу
+        panel.add(subtitle, gbc);
 
+        // Используем новые кастомные кнопки
+        ModernButton btnTake = new ModernButton("НАЧАТЬ ТЕСТИРОВАНИЕ", ACCENT_COLOR, ACCENT_HOVER);
+        btnTake.addActionListener(e -> startQuiz()); //[cite: 2]
+        gbc.gridy = 2;
+        gbc.insets = new Insets(10, 0, 10, 0);
+        panel.add(btnTake, gbc);
+
+        ModernButton btnCreate = new ModernButton("РЕДАКТОР ВОПРОСОВ", SECONDARY_BTN, SECONDARY_HOVER);
         btnCreate.addActionListener(e -> cardLayout.show(mainPanel, "AddQuestion"));
-        btnTake.addActionListener(e -> startQuiz());
-        btnExit.addActionListener(e -> System.exit(0));
+        gbc.gridy = 3;
+        panel.add(btnCreate, gbc);
 
-        panel.add(titleLabel);
-        panel.add(btnCreate);
-        panel.add(btnTake);
-        panel.add(btnExit);
-
-        return panel;
-    }
-
-    // --- Экран 2: Создание вопроса ---
-    private JPanel createAddQuestionPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JPanel formPanel = new JPanel(new GridLayout(7, 2, 5, 10));
-
-        JTextField tfQuestion = new JTextField();
-        JTextField[] tfOptions = new JTextField[4];
-        for (int i = 0; i < 4; i++) {
-            tfOptions[i] = new JTextField();
-        }
-        Integer[] correctIndices = {1, 2, 3, 4};
-        JComboBox<Integer> cbCorrect = new JComboBox<>(correctIndices);
-
-        formPanel.add(new JLabel("Текст вопроса:"));
-        formPanel.add(tfQuestion);
-        for (int i = 0; i < 4; i++) {
-            formPanel.add(new JLabel("Вариант " + (i + 1) + ":"));
-            formPanel.add(tfOptions[i]);
-        }
-        formPanel.add(new JLabel("Номер правильного ответа:"));
-        formPanel.add(cbCorrect);
-
-        JPanel btnPanel = new JPanel();
-        JButton btnSave = new JButton("Сохранить");
-        JButton btnBack = new JButton("Назад");
-
-        btnSave.addActionListener(e -> {
-            String qText = tfQuestion.getText().trim();
-            if (qText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Введите текст вопроса!", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            List<String> options = new ArrayList<>();
-            for (int i = 0; i < 4; i++) {
-                String optText = tfOptions[i].getText().trim();
-                if (optText.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Заполните все варианты ответов!", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                options.add(optText);
-            }
-
-            int correctIdx = (int) cbCorrect.getSelectedItem();
-
-            // Загружаем старые, добавляем новый, сохраняем
-            List<Question> questions = quizManager.loadQuiz();
-            questions.add(new Question(qText, options, correctIdx));
-            quizManager.saveQuiz(questions);
-
-            JOptionPane.showMessageDialog(this, "Вопрос успешно добавлен!", "Успех", JOptionPane.INFORMATION_MESSAGE);
-
-            // Очищаем поля
-            tfQuestion.setText("");
-            for (JTextField tf : tfOptions) tf.setText("");
-            cbCorrect.setSelectedIndex(0);
-        });
-
-        btnBack.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
-
-        btnPanel.add(btnSave);
-        btnPanel.add(btnBack);
-
-        panel.add(new JLabel("Создание нового вопроса", SwingConstants.CENTER), BorderLayout.NORTH);
-        panel.add(formPanel, BorderLayout.CENTER);
-        panel.add(btnPanel, BorderLayout.SOUTH);
+        ModernButton btnExit = new ModernButton("ВЫХОД", SECONDARY_BTN, SECONDARY_HOVER);
+        btnExit.addActionListener(e -> System.exit(0)); //[cite: 2]
+        gbc.gridy = 4;
+        panel.add(btnExit, gbc);
 
         return panel;
     }
 
-    // --- Экран 3: Прохождение теста ---
     private JPanel createTakeQuizPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(BG_COLOR);
+        panel.setBorder(new EmptyBorder(100, 250, 100, 250));
 
-        questionLabel = new JLabel("Текст вопроса здесь");
-        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        questionLabel = new JLabel("Вопрос", SwingConstants.CENTER);
+        questionLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        questionLabel.setForeground(TEXT_COLOR);
+        panel.add(questionLabel, BorderLayout.NORTH);
 
-        JPanel optionsPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+        optionsPanel = new JPanel(new GridLayout(4, 1, 15, 15));
+        optionsPanel.setBackground(BG_COLOR);
+        optionsPanel.setBorder(new EmptyBorder(50, 0, 50, 0));
+
         optionButtons = new JRadioButton[4];
         optionsGroup = new ButtonGroup();
 
         for (int i = 0; i < 4; i++) {
-            optionButtons[i] = new JRadioButton("Вариант " + (i + 1));
+            optionButtons[i] = new JRadioButton();
+            optionButtons[i].setFont(new Font("Segoe UI", Font.PLAIN, 20));
+            optionButtons[i].setForeground(TEXT_COLOR);
+            optionButtons[i].setBackground(CARD_BG);
+            optionButtons[i].setFocusPainted(false);
+            optionButtons[i].setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            optionButtons[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
             optionsGroup.add(optionButtons[i]);
             optionsPanel.add(optionButtons[i]);
         }
 
         JPanel btnPanel = new JPanel();
-        JButton btnNext = new JButton("Ответить / Дальше");
-        JButton btnCancel = new JButton("Прервать тест");
-
-        btnNext.addActionListener(e -> processAnswer());
-        btnCancel.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
-
+        btnPanel.setBackground(BG_COLOR);
+        ModernButton btnNext = new ModernButton("ПОДТВЕРДИТЬ ОТВЕТ", ACCENT_COLOR, ACCENT_HOVER);
+        btnNext.addActionListener(e -> processAnswer()); //[cite: 2]
         btnPanel.add(btnNext);
-        btnPanel.add(btnCancel);
 
-        panel.add(questionLabel, BorderLayout.NORTH);
         panel.add(optionsPanel, BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
-
         return panel;
     }
 
-    // Логика запуска теста
+    private JPanel createAddQuestionPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BG_COLOR);
+        panel.setBorder(new EmptyBorder(50, 200, 50, 200));
+
+        JPanel form = new JPanel(new GridLayout(0, 1, 10, 10));
+        form.setBackground(BG_COLOR);
+
+        JTextField tfQuestion = createStyledField("Введите текст вопроса...");
+        JTextField[] tfOptions = new JTextField[4];
+        for(int i=0; i<4; i++) tfOptions[i] = createStyledField("Вариант " + (i+1));
+
+        form.add(new JLabel("ВОПРОС:") {{ setForeground(ACCENT_COLOR); setFont(new Font("Segoe UI", Font.BOLD, 14)); }});
+        form.add(tfQuestion);
+        form.add(new JLabel("ВАРИАНТЫ ОТВЕТОВ:") {{ setForeground(ACCENT_COLOR); setFont(new Font("Segoe UI", Font.BOLD, 14)); }});
+        for(JTextField f : tfOptions) form.add(f);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        btnPanel.setBackground(BG_COLOR);
+
+        ModernButton btnSave = new ModernButton("СОХРАНИТЬ", ACCENT_COLOR, ACCENT_HOVER);
+        btnSave.setPreferredSize(new Dimension(250, 50));
+        btnSave.addActionListener(e -> {
+            if(tfQuestion.getText().isEmpty()) return;
+            List<String> opts = new ArrayList<>();
+            for(JTextField f : tfOptions) opts.add(f.getText());
+
+            List<Question> list = quizManager.loadQuiz(); //[cite: 3]
+            list.add(new Question(tfQuestion.getText(), opts, 0));
+            quizManager.saveQuiz(list); //[cite: 3]
+
+            // Очистка полей после сохранения
+            tfQuestion.setText("");
+            for(JTextField f : tfOptions) f.setText("");
+
+            JOptionPane.showMessageDialog(this, "Вопрос успешно сохранен!");
+        });
+
+        ModernButton btnBack = new ModernButton("В ГЛАВНОЕ МЕНЮ", SECONDARY_BTN, SECONDARY_HOVER);
+        btnBack.setPreferredSize(new Dimension(250, 50));
+        btnBack.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
+
+        btnPanel.add(btnSave);
+        btnPanel.add(btnBack);
+
+        panel.add(form, BorderLayout.CENTER);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JTextField createStyledField(String placeholder) {
+        JTextField f = new JTextField();
+        f.setBackground(CARD_BG);
+        f.setForeground(TEXT_COLOR);
+        f.setCaretColor(TEXT_COLOR);
+        f.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        f.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(50, 50, 50), 1),
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        return f;
+    }
+
     private void startQuiz() {
-        currentQuiz = quizManager.loadQuiz();
-        if (currentQuiz == null || currentQuiz.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "База вопросов пуста. Сначала добавьте вопросы!", "Внимание", JOptionPane.WARNING_MESSAGE);
+        currentQuiz = quizManager.loadQuiz(); //[cite: 3]
+        if (currentQuiz.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Сначала добавьте вопросы в редакторе!");
             return;
         }
-
         currentQuestionIndex = 0;
         score = 0;
         showQuestion();
         cardLayout.show(mainPanel, "TakeQuiz");
     }
 
-    // Отображение текущего вопроса
     private void showQuestion() {
-        optionsGroup.clearSelection(); // Сбрасываем выбор
-        Question q = currentQuiz.get(currentQuestionIndex);
-
-        questionLabel.setText("Вопрос " + (currentQuestionIndex + 1) + " из " + currentQuiz.size() + ": " + q.getText());
-        List<String> options = q.getOptions();
+        Question q = currentQuiz.get(currentQuestionIndex); //[cite: 2]
+        questionLabel.setText("<html><body style='text-align: center'>" + q.getText() + "</body></html>");
         for (int i = 0; i < 4; i++) {
-            optionButtons[i].setText(options.get(i));
+            optionButtons[i].setText(q.getOptions().get(i));
+            optionButtons[i].setSelected(false);
         }
+        optionsGroup.clearSelection();
     }
 
-    // Обработка ответа
     private void processAnswer() {
-        int selectedIndex = -1;
-        for (int i = 0; i < 4; i++) {
-            if (optionButtons[i].isSelected()) {
-                selectedIndex = i + 1; // Индексы правильных ответов у нас от 1 до 4
-                break;
-            }
-        }
+        int selected = -1;
+        for(int i=0; i<4; i++) if(optionButtons[i].isSelected()) selected = i;
 
-        if (selectedIndex == -1) {
-            JOptionPane.showMessageDialog(this, "Пожалуйста, выберите вариант ответа!", "Ошибка", JOptionPane.WARNING_MESSAGE);
+        if(selected == -1) {
+            JOptionPane.showMessageDialog(this, "Пожалуйста, выберите вариант ответа!");
             return;
         }
+        if(selected == currentQuiz.get(currentQuestionIndex).getCorrectAnswer()) score++;
 
-        Question q = currentQuiz.get(currentQuestionIndex);
-        if (selectedIndex == q.getCorrectAnswer()) {
-            score++;
-        }
-
-        currentQuestionIndex++;
-
-        if (currentQuestionIndex < currentQuiz.size()) {
-            showQuestion();
-        } else {
-            showResults();
+        currentQuestionIndex++; 
+        if(currentQuestionIndex < currentQuiz.size()) showQuestion();
+        else {
+            JOptionPane.showMessageDialog(this, "Результат: " + score + " из " + currentQuiz.size());
+            cardLayout.show(mainPanel, "MainMenu");
         }
     }
 
-    // Вывод результатов
-    private void showResults() {
-        double percentage = ((double) score / currentQuiz.size()) * 100;
-        String message = String.format("Тест завершен!\n\nПравильных ответов: %d из %d\nПроцент верных ответов: %.1f%%",
-                score, currentQuiz.size(), percentage);
-
-        JOptionPane.showMessageDialog(this, message, "Итоги тестирования", JOptionPane.INFORMATION_MESSAGE);
-        cardLayout.show(mainPanel, "MainMenu"); // Возврат в главное меню
-    }
-
-    // Точка входа в программу
     public static void main(String[] args) {
-        // Устанавливаем системный дизайн окон (чтобы выглядело как родное приложение Windows/macOS)
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Запуск окна в отдельном потоке
-        SwingUtilities.invokeLater(() -> {
-            new QuizAppGUI().setVisible(true);
-        });
+        // Мы убрали UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        // чтобы избежать конфликтов с темами Windows. Наш код сам рисует всё как нужно.
+        SwingUtilities.invokeLater(() -> new QuizAppGUI().setVisible(true));
     }
 }

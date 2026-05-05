@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javaalmas20
+  namespace: javaalmas20
+  labels:
+    app: javaalmas20
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javaalmas20
+  template:
+    metadata:
+      labels:
+        app: javaalmas20
+    spec:
+      containers:
+        - name: javaalmas20
+          image: ghcr.io/tamirlan/javaalmas20:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: javaalmas20-config
+            - secretRef:
+                name: javaalmas20-secrets
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: javaalmas20-service
+  namespace: javaalmas20
+spec:
+  type: ClusterIP
+  selector:
+    app: javaalmas20
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: javaalmas20-ingress
+  namespace: javaalmas20
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: javaalmas20.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: javaalmas20-service
+                port:
+                  number: 80

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Pro — Панель преподавателя</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+        .list-item { background: #2d2d2d; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .badge { background: var(--accent-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .badge-close { background: var(--danger-color); cursor: pointer; border: none; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1 class="title" style="margin: 0; font-size: 2rem;">ПАНЕЛЬ ПРЕПОДАВАТЕЛЯ</h1>
+            <button onclick="logout()" class="btn btn-secondary" style="width: auto; max-width: none; margin: 0;">ВЫХОД</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Questions Section -->
+            <div class="card">
+                <h2>Управление вопросами</h2>
+                <button onclick="toggleQForm()" class="btn btn-blue" style="margin: 1rem 0; width: auto; max-width: none;">+ Добавить вопрос</button>
+                
+                <form id="qForm" class="form-group" style="display: none; max-width: 100%; border-bottom: 1px solid #3c3c3c; padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <input type="text" id="qText" class="form-control" placeholder="Текст вопроса" required style="margin-bottom: 0.5rem;">
+                    <input type="text" id="opt1" class="form-control" placeholder="Вариант 1 (Правильный по умолчанию)" required style="margin-bottom: 0.5rem;">
+                    <input type="text" id="opt2" class="form-control" placeholder="Вариант 2" required style="margin-bottom: 0.5rem;">
+                    <input type="text" id="opt3" class="form-control" placeholder="Вариант 3" required style="margin-bottom: 0.5rem;">
+                    <input type="text" id="opt4" class="form-control" placeholder="Вариант 4" required style="margin-bottom: 0.5rem;">
+                    <label>Правильный вариант (0-3):</label>
+                    <input type="number" id="correctIdx" class="form-control" min="0" max="3" value="0" required>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Сохранить</button>
+                </form>
+
+                <div id="qList"></div>
+            </div>
+
+            <!-- Rooms Section -->
+            <div class="card">
+                <h2>Активные комнаты</h2>
+                <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                    <input type="text" id="newRoomName" class="form-control" placeholder="Название комнаты">
+                    <button onclick="createRoom()" class="btn btn-primary" style="width: auto; margin: 0;">Создать</button>
+                </div>
+                <div id="roomList"></div>
+
+                <h2 style="margin-top: 2rem;">Результаты по комнате</h2>
+                <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                    <input type="text" id="checkRoomCode" class="form-control" placeholder="Код комнаты (напр. AB12CD)">
+                    <button onclick="loadResults()" class="btn btn-blue" style="width: auto; margin: 0;">Показать</button>
+                </div>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/api.js}"></script>
+    <script>
+        // Auth check
+        if(!getToken()) window.location.href = '/login';
+
+        async function loadData() {
+            await loadQuestions();
+            await loadRooms();
+        }
+
+        // --- Questions ---
+        function toggleQForm() {
+            const f = document.getElementById('qForm');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.getElementById('qForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                questionText: document.getElementById('qText').value,
+                opt1: document.getElementById('opt1').value,
+                opt2: document.getElementById('opt2').value,
+                opt3: document.getElementById('opt3').value,
+                opt4: document.getElementById('opt4').value,
+                correctIndex: parseInt(document.getElementById('correctIdx').value)
+            };
+            await apiCall('/questions', 'POST', body);
+            document.getElementById('qForm').reset();
+            toggleQForm();
+            loadQuestions();
+        });
+
+        async function loadQuestions() {
+            const list = document.getElementById('qList');
+            list.innerHTML = 'Загрузка...';
+            try {
+                const qs = await apiCall('/questions');
+                list.innerHTML = '';
+                qs.forEach(q => {
+                    list.innerHTML += `<div class="list-item">
+                        <span>${q.questionText}</span>
+                        <button class="badge badge-close" onclick="deleteQuestion('${q.id}')">X</button>
+                    </div>`;
+                });
+            } catch(e) {}
+        }
+
+        async function deleteQuestion(id) {
+            if(confirm('Удалить вопрос?')) {
+                await apiCall(`/questions/${id}`, 'DELETE');
+                loadQuestions();
+            }
+        }
+
+        // --- Rooms ---
+        async function loadRooms() {
+            const list = document.getElementById('roomList');
+            try {
+                const rooms = await apiCall('/rooms/my');
+                list.innerHTML = '';
+                if(rooms.length === 0) list.innerHTML = '<p style="color:#aaa;">Нет активных комнат</p>';
+                rooms.forEach(r => {
+                    list.innerHTML += `<div class="list-item">
+                        <div>
+                            <span class="badge" style="margin-right:0.5rem; font-family:monospace;">${r.roomCode}</span>
+                            ${r.name}
+                        </div>
+                        <button class="badge badge-close" onclick="closeRoom('${r.roomCode}')">Закрыть</button>
+                    </div>`;
+                });
+            } catch(e) {}
+        }
+
+        async function createRoom() {
+            const name = document.getElementById('newRoomName').value;
+            if(!name) return alert('Введите название');
+            await apiCall('/rooms', 'POST', { name });
+            document.getElementById('newRoomName').value = '';
+            loadRooms();
+        }
+
+        async function closeRoom(code) {
+            if(confirm('Закрыть комнату? Студенты больше не смогут в нее войти.')) {
+                await apiCall(`/rooms/${code}/close`, 'POST');
+                loadRooms();
+            }
+        }
+
+        // --- Results ---
+        async function loadResults() {
+            const code = document.getElementById('checkRoomCode').value.toUpperCase();
+            if(!code) return;
+            const list = document.getElementById('resultsList');
+            list.innerHTML = 'Загрузка...';
+            try {
+                const res = await apiCall(`/quiz/results/room/${code}`);
+                list.innerHTML = '';
+                if(res.length === 0) list.innerHTML = '<p style="color:#aaa;">Нет результатов</p>';
+                res.forEach(r => {
+                    list.innerHTML += `<div class="list-item">
+                        <span><b>${r.studentName}</b></span>
+                        <span style="color: ${r.grade==='F'?'#dc3545':'#28a745'}; font-weight:bold;">${r.grade} (${r.percentage}%)</span>
+                    </div>`;
+                });
+            } catch(e) {
+                list.innerHTML = '<p style="color:red;">Ошибка загрузки</p>';
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

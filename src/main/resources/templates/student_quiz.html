@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Pro — Тест</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .options-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 600px; margin: 2rem auto; }
+        .option-btn { background-color: var(--card-bg); border: 2px solid #3c3c3c; border-radius: 8px; padding: 1.5rem; color: var(--text-color); font-size: 1.2rem; cursor: pointer; text-align: left; transition: all 0.2s; }
+        .option-btn:hover { border-color: var(--accent-color); }
+        .option-btn.selected { background-color: var(--accent-color); border-color: var(--accent-color); color: white; }
+    </style>
+</head>
+<body>
+    <div class="container" style="text-align: center; margin-top: 5rem;">
+        <h2 id="progressLabel" style="color: var(--secondary-text); margin-bottom: 1rem;">Загрузка...</h2>
+        <h1 id="questionText" style="font-size: 2.5rem; margin-bottom: 2rem;"></h1>
+        
+        <div class="options-container" id="optionsContainer"></div>
+        
+        <button id="nextBtn" class="btn btn-primary" style="margin-top: 2rem; display: none;" onclick="submitAnswer()">ПОДТВЕРДИТЬ ОТВЕТ</button>
+    </div>
+
+    <script th:src="@{/js/api.js}"></script>
+    <script>
+        let questions = [];
+        let currentIdx = 0;
+        let answers = [];
+        let selectedIndex = -1;
+
+        const studentName = sessionStorage.getItem('studentName');
+        const roomCode = sessionStorage.getItem('roomCode');
+
+        if (!studentName || !roomCode) {
+            window.location.href = '/student/join';
+        }
+
+        async function loadQuestions() {
+            try {
+                const res = await fetch('/api/questions/public');
+                if(!res.ok) throw new Error("Failed to load");
+                questions = await res.json();
+                
+                if(questions.length === 0) {
+                    document.getElementById('progressLabel').innerText = 'Нет доступных вопросов';
+                    return;
+                }
+                showQuestion();
+            } catch(e) {
+                document.getElementById('progressLabel').innerText = 'Ошибка загрузки вопросов';
+            }
+        }
+
+        function showQuestion() {
+            if(currentIdx >= questions.length) {
+                finishQuiz();
+                return;
+            }
+            
+            const q = questions[currentIdx];
+            document.getElementById('progressLabel').innerText = `Вопрос ${currentIdx + 1} из ${questions.length}`;
+            document.getElementById('questionText').innerText = q.questionText;
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            
+            const opts = [q.opt1, q.opt2, q.opt3, q.opt4];
+            selectedIndex = -1;
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(idx, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectOption(idx, btnElem) {
+            selectedIndex = idx;
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btnElem.classList.add('selected');
+            document.getElementById('nextBtn').style.display = 'inline-block';
+        }
+
+        function submitAnswer() {
+            if(selectedIndex === -1) return;
+            answers.push(selectedIndex);
+            currentIdx++;
+            showQuestion();
+        }
+
+        async function finishQuiz() {
+            document.getElementById('progressLabel').innerText = 'Отправка результатов...';
+            document.getElementById('questionText').innerText = '';
+            document.getElementById('optionsContainer').innerHTML = '';
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            try {
+                const res = await fetch('/api/quiz/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ studentName, roomCode, answers })
+                });
+                
+                if(res.ok) {
+                    const resultData = await res.json();
+                    sessionStorage.setItem('quizResult', JSON.stringify(resultData));
+                    window.location.href = '/student/result';
+                } else {
+                    document.getElementById('progressLabel').innerText = 'Ошибка при отправке (возможно комната закрыта)';
+                }
+            } catch(e) {
+                document.getElementById('progressLabel').innerText = 'Ошибка сети';
+            }
+        }
+
+        loadQuestions();
+    </script>
+</body>
+</html>

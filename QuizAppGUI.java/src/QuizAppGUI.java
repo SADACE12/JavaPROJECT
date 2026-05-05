@@ -13,6 +13,11 @@ public class QuizAppGUI extends JFrame {
     private final Color CARD_BG        = new Color(30, 30, 30);
     private final Color ACCENT_COLOR   = new Color(110, 86, 232);
     private final Color ACCENT_HOVER   = new Color(130, 106, 255);
+
+    // Новые синие цвета для кнопок создания комнаты
+    private final Color BLUE_COLOR     = new Color(0, 122, 255);
+    private final Color BLUE_HOVER     = new Color(0, 105, 217);
+
     private final Color SECONDARY_BTN  = new Color(45, 45, 45);
     private final Color SECONDARY_HOVER= new Color(60, 60, 60);
     private final Color TEXT_COLOR     = new Color(245, 245, 245);
@@ -48,9 +53,10 @@ public class QuizAppGUI extends JFrame {
     private JRadioButton[] optionButtons;
     private ButtonGroup optionsGroup;
 
-    // Кнопки доступны только преподавателю
+    // Кнопки для управления видимостью в зависимости от роли
     private ModernButton btnCreate;
     private ModernButton btnEditor;
+    private ModernButton btnJoin;
 
     // Редактор вопросов
     private DefaultListModel<Question> listModel;
@@ -134,6 +140,7 @@ public class QuizAppGUI extends JFrame {
             isTeacher = true;
             btnCreate.setVisible(true);
             btnEditor.setVisible(true);
+            if (btnJoin != null) btnJoin.setVisible(false); // Скрываем у преподавателя
             cardLayout.show(mainPanel, "MainMenu");
         });
         gbc.gridy = 1; panel.add(btnTeacher, gbc);
@@ -143,6 +150,7 @@ public class QuizAppGUI extends JFrame {
             isTeacher = false;
             btnCreate.setVisible(false);
             btnEditor.setVisible(false);
+            if (btnJoin != null) btnJoin.setVisible(true); // Показываем у студента
             cardLayout.show(mainPanel, "MainMenu");
         });
         gbc.gridy = 2; panel.add(btnStudent, gbc);
@@ -169,13 +177,13 @@ public class QuizAppGUI extends JFrame {
         panel.add(subtitle, gbc);
         gbc.insets = new Insets(10, 0, 10, 0);
 
-        // Студент: войти по коду
-        ModernButton btnJoin = new ModernButton("ВОЙТИ В КОМНАТУ ПО КОДУ", ACCENT_COLOR, ACCENT_HOVER);
+        // Студент: войти по коду (теперь это переменная класса)
+        btnJoin = new ModernButton("ВОЙТИ В КОМНАТУ ПО КОДУ", ACCENT_COLOR, ACCENT_HOVER);
         btnJoin.addActionListener(e -> cardLayout.show(mainPanel, "JoinRoom"));
         gbc.gridy = 2; panel.add(btnJoin, gbc);
 
-        // Преподаватель: создать комнату
-        btnCreate = new ModernButton("СОЗДАТЬ КОМНАТУ / УПРАВЛЕНИЕ", SECONDARY_BTN, SECONDARY_HOVER);
+        // Преподаватель: создать комнату (красим в синий)
+        btnCreate = new ModernButton("СОЗДАТЬ КОМНАТУ / УПРАВЛЕНИЕ", BLUE_COLOR, BLUE_HOVER);
         btnCreate.addActionListener(e -> {
             refreshEditorList();
             cardLayout.show(mainPanel, "RoomManager");
@@ -194,7 +202,7 @@ public class QuizAppGUI extends JFrame {
         btnChangeRole.addActionListener(e -> cardLayout.show(mainPanel, "RoleScreen"));
         gbc.gridy = 5; panel.add(btnChangeRole, gbc);
 
-        ModernButton btnExit = new ModernButton("ВЫХОД", SECONDARY_BTN, SECONDARY_HOVER);
+        ModernButton btnExit = new ModernButton("ВЫХОД", DANGER_COLOR, DANGER_HOVER);
         btnExit.addActionListener(e -> System.exit(0));
         gbc.gridy = 6; panel.add(btnExit, gbc);
 
@@ -240,7 +248,8 @@ public class QuizAppGUI extends JFrame {
                 BorderFactory.createLineBorder(new Color(80, 80, 80), 1),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)));
 
-        ModernButton btnNewRoom = new ModernButton("СОЗДАТЬ КОМНАТУ", ACCENT_COLOR, ACCENT_HOVER);
+        // Кнопка создания внутри менеджера (тоже синяя)
+        ModernButton btnNewRoom = new ModernButton("СОЗДАТЬ КОМНАТУ", BLUE_COLOR, BLUE_HOVER);
         btnNewRoom.setPreferredSize(new Dimension(220, 42));
         btnNewRoom.addActionListener(e -> {
             String name = tfRoomName.getText().trim();
@@ -477,32 +486,72 @@ public class QuizAppGUI extends JFrame {
 
     // ===================== РЕДАКТОР ВОПРОСОВ =====================
     private JPanel createEditorPanel() {
-        JPanel panel = new JPanel(new BorderLayout(40, 0));
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setBackground(BG_COLOR);
-        panel.setBorder(new EmptyBorder(40, 50, 40, 50));
 
-        JPanel leftPanel = new JPanel(new BorderLayout(0, 15));
-        leftPanel.setBackground(BG_COLOR);
-        leftPanel.setPreferredSize(new Dimension(350, 0));
+        // ── LEFT SIDEBAR ──────────────────────────────────────────────
+        JPanel sidebar = new JPanel(new BorderLayout(0, 0));
+        sidebar.setBackground(CARD_BG);
+        sidebar.setPreferredSize(new Dimension(300, 0));
+
+        // Sidebar header
+        JPanel sidebarHeader = new JPanel(new BorderLayout());
+        sidebarHeader.setBackground(CARD_BG);
+        sidebarHeader.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(60, 60, 60)),
+                new EmptyBorder(22, 22, 22, 22)));
 
         JLabel listTitle = new JLabel("СПИСОК ВОПРОСОВ");
-        listTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        listTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
         listTitle.setForeground(SECONDARY_TEXT);
-        leftPanel.add(listTitle, BorderLayout.NORTH);
+        listTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebarHeader.add(listTitle, BorderLayout.NORTH);
 
+        sidebar.add(sidebarHeader, BorderLayout.NORTH);
+
+        // Question list
         listModel = new DefaultListModel<>();
         questionList = new JList<>(listModel);
         questionList.setBackground(CARD_BG);
-        questionList.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        questionList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         questionList.setCellRenderer(new DefaultListCellRenderer() {
-            @Override public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                label.setBorder(new EmptyBorder(15, 20, 15, 20));
-                label.setBackground(isSelected ? ACCENT_COLOR : CARD_BG);
-                label.setForeground(TEXT_COLOR);
-                return label;
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JPanel cell = new JPanel(new BorderLayout(10, 0));
+                cell.setOpaque(true);
+                cell.setBackground(isSelected ? ACCENT_COLOR : CARD_BG);
+                cell.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(45, 45, 45)),
+                        new EmptyBorder(12, 16, 12, 16)));
+
+                // Index badge
+                JLabel badge = new JLabel(String.valueOf(index + 1));
+                badge.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                badge.setForeground(isSelected ? Color.WHITE : ACCENT_COLOR);
+                badge.setHorizontalAlignment(SwingConstants.CENTER);
+                badge.setPreferredSize(new Dimension(24, 24));
+                cell.add(badge, BorderLayout.WEST);
+
+                // Question text
+                String text = value.toString();
+                JLabel lbl = new JLabel(text.length() > 32 ? text.substring(0, 32) + "…" : text);
+                lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                lbl.setForeground(TEXT_COLOR);
+                lbl.setBorder(new EmptyBorder(0, 10, 0, 0));
+                cell.add(lbl, BorderLayout.CENTER);
+
+                if (isSelected) {
+                    JLabel arrow = new JLabel("›");
+                    arrow.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                    arrow.setForeground(Color.WHITE);
+                    cell.add(arrow, BorderLayout.EAST);
+                }
+
+                return cell;
             }
         });
+
         questionList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 Question selected = questionList.getSelectedValue();
@@ -515,74 +564,187 @@ public class QuizAppGUI extends JFrame {
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(questionList);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60), 1));
-        scrollPane.getVerticalScrollBar().setBackground(CARD_BG);
-        leftPanel.add(scrollPane, BorderLayout.CENTER);
+        JScrollPane listScroll = new JScrollPane(questionList);
+        listScroll.setBorder(BorderFactory.createEmptyBorder());
+        listScroll.getViewport().setBackground(CARD_BG);
+        listScroll.getVerticalScrollBar().setBackground(CARD_BG);
+        listScroll.getVerticalScrollBar().setUnitIncrement(16);
+        sidebar.add(listScroll, BorderLayout.CENTER);
 
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBackground(BG_COLOR);
+        // Sidebar bottom — New question button
+        JPanel sidebarBottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 16));
+        sidebarBottom.setBackground(CARD_BG);
+        sidebarBottom.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(60, 60, 60)));
+        ModernButton btnClear = new ModernButton("+ НОВЫЙ ВОПРОС", SECONDARY_BTN, SECONDARY_HOVER);
+        btnClear.setPreferredSize(new Dimension(240, 42));
+        btnClear.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnClear.addActionListener(e -> clearEditorForm());
+        sidebarBottom.add(btnClear);
+        sidebar.add(sidebarBottom, BorderLayout.SOUTH);
 
-        JPanel formWrapper = new JPanel(new BorderLayout());
-        formWrapper.setBackground(BG_COLOR);
+        panel.add(sidebar, BorderLayout.WEST);
 
+        // ── RIGHT CONTENT ─────────────────────────────────────────────
+        JPanel content = new JPanel(new BorderLayout(0, 0));
+        content.setBackground(BG_COLOR);
+        content.setBorder(new EmptyBorder(40, 50, 30, 50));
+
+        // Header strip
+        JPanel headerStrip = new JPanel(new BorderLayout());
+        headerStrip.setBackground(BG_COLOR);
+        headerStrip.setBorder(new EmptyBorder(0, 0, 30, 0));
+
+        JLabel formTitle = new JLabel("РЕДАКТОР ВОПРОСА");
+        formTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        formTitle.setForeground(TEXT_COLOR);
+        headerStrip.add(formTitle, BorderLayout.WEST);
+
+        JLabel hint = new JLabel("Выберите вопрос слева или создайте новый");
+        hint.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        hint.setForeground(SECONDARY_TEXT);
+        headerStrip.add(hint, BorderLayout.EAST);
+
+        content.add(headerStrip, BorderLayout.NORTH);
+
+        // Form scroll area
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setBackground(BG_COLOR);
-        form.setBorder(new EmptyBorder(0, 10, 0, 10));
 
-        JLabel formTitle = new JLabel("РЕДАКТОР");
-        formTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        formTitle.setForeground(TEXT_COLOR);
-        formTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(formTitle);
-        form.add(Box.createVerticalStrut(30));
+        // ── Question text card ──
+        JPanel questionCard = createFormCard();
+        questionCard.setLayout(new BoxLayout(questionCard, BoxLayout.Y_AXIS));
 
-        addFormLabel(form, "ТЕКСТ ВОПРОСА:");
+        JLabel qLabel = createFieldLabel("ТЕКСТ ВОПРОСА:");
+        questionCard.add(qLabel);
+        questionCard.add(Box.createVerticalStrut(10));
+
         tfEditorQuestion = createStyledField("Введите текст вопроса...");
-        tfEditorQuestion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        tfEditorQuestion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         tfEditorQuestion.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(tfEditorQuestion);
-        form.add(Box.createVerticalStrut(25));
+        questionCard.add(tfEditorQuestion);
 
-        addFormLabel(form, "ВАРИАНТЫ ОТВЕТОВ:");
+        form.add(questionCard);
+        form.add(Box.createVerticalStrut(16));
+
+        // ── Answer options card ──
+        JPanel answersCard = createFormCard();
+        answersCard.setLayout(new BoxLayout(answersCard, BoxLayout.Y_AXIS));
+
+        JLabel aLabel = createFieldLabel("ВАРИАНТЫ ОТВЕТОВ:");
+        answersCard.add(aLabel);
+        answersCard.add(Box.createVerticalStrut(14));
+
+        String[] optLetters = {"1", "2", "3", "4"};
+
         tfEditorOptions = new JTextField[4];
         for (int i = 0; i < 4; i++) {
-            JPanel optionRow = new JPanel(new BorderLayout(15, 0));
-            optionRow.setBackground(BG_COLOR);
-            optionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-            optionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-            JLabel numLabel = new JLabel(String.valueOf(i + 1));
-            numLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            numLabel.setForeground(ACCENT_COLOR);
-            numLabel.setPreferredSize(new Dimension(25, 45));
-            numLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            tfEditorOptions[i] = createStyledField("Вариант " + (i + 1));
-            optionRow.add(numLabel, BorderLayout.WEST);
-            optionRow.add(tfEditorOptions[i], BorderLayout.CENTER);
-            form.add(optionRow);
-            form.add(Box.createVerticalStrut(12));
+            JPanel optRow = new JPanel(new BorderLayout(12, 0));
+            optRow.setBackground(BG_COLOR);
+            optRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+            optRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+            optRow.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(60, 60, 60), 1),
+                    new EmptyBorder(4, 4, 4, 12)));
+
+            JLabel badge = new JLabel(optLetters[i]);
+            badge.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            badge.setForeground(ACCENT_COLOR);
+            badge.setHorizontalAlignment(SwingConstants.CENTER);
+            badge.setPreferredSize(new Dimension(36, 42));
+            optRow.add(badge, BorderLayout.WEST);
+
+            tfEditorOptions[i] = new JTextField();
+            tfEditorOptions[i].setBackground(BG_COLOR);
+            tfEditorOptions[i].setForeground(TEXT_COLOR);
+            tfEditorOptions[i].setCaretColor(TEXT_COLOR);
+            tfEditorOptions[i].setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            tfEditorOptions[i].setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+            optRow.add(tfEditorOptions[i], BorderLayout.CENTER);
+
+            answersCard.add(optRow);
+            if (i < 3) answersCard.add(Box.createVerticalStrut(8));
         }
-        form.add(Box.createVerticalStrut(15));
 
-        addFormLabel(form, "ПРАВИЛЬНЫЙ ОТВЕТ (НОМЕР):");
+        form.add(answersCard);
+        form.add(Box.createVerticalStrut(16));
+
+        // ── Correct answer card ──
+        JPanel correctCard = createFormCard();
+        correctCard.setLayout(new BoxLayout(correctCard, BoxLayout.Y_AXIS));
+
+        JLabel cLabel = createFieldLabel("ПРАВИЛЬНЫЙ ОТВЕТ:");
+        correctCard.add(cLabel);
+        correctCard.add(Box.createVerticalStrut(12));
+
+        JPanel radioPanel = new JPanel(new GridLayout(1, 4, 10, 0));
+        radioPanel.setBackground(CARD_BG);
+        radioPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        radioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        ButtonGroup radioGroup = new ButtonGroup();
+        JToggleButton[] answerBtns = new JToggleButton[4];
+        for (int i = 0; i < 4; i++) {
+            final int idx = i;
+            answerBtns[i] = new JToggleButton(optLetters[i]) {
+                @Override protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    boolean selected = isSelected();
+                    g2.setColor(selected ? ACCENT_COLOR : SECONDARY_BTN);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                    if (!selected) {
+                        g2.setColor(new Color(60, 60, 60));
+                        g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 10, 10);
+                    }
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            answerBtns[i].setForeground(Color.WHITE);
+            answerBtns[i].setFont(new Font("Segoe UI", Font.BOLD, 15));
+            answerBtns[i].setFocusPainted(false);
+            answerBtns[i].setContentAreaFilled(false);
+            answerBtns[i].setBorderPainted(false);
+            answerBtns[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
+            radioGroup.add(answerBtns[i]);
+            radioPanel.add(answerBtns[i]);
+        }
+        answerBtns[0].setSelected(true);
+        correctCard.add(radioPanel);
+
+        // Keep cbCorrectAnswer as hidden sync mechanism (required by existing logic)
         cbCorrectAnswer = new JComboBox<>(new Integer[]{1, 2, 3, 4});
-        cbCorrectAnswer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-        cbCorrectAnswer.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        cbCorrectAnswer.setBackground(CARD_BG);
-        cbCorrectAnswer.setForeground(TEXT_COLOR);
-        cbCorrectAnswer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(cbCorrectAnswer);
-        form.add(Box.createVerticalStrut(30));
+        cbCorrectAnswer.setVisible(false);
+        correctCard.add(cbCorrectAnswer);
 
-        formWrapper.add(form, BorderLayout.NORTH);
+        // Sync toggle buttons → combobox
+        for (int i = 0; i < 4; i++) {
+            final int idx = i;
+            answerBtns[i].addActionListener(e -> cbCorrectAnswer.setSelectedIndex(idx));
+        }
 
-        JPanel btnPanel = new JPanel(new GridLayout(2, 2, 15, 15));
-        btnPanel.setBackground(BG_COLOR);
-        btnPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        // Sync combobox → toggle buttons when question loaded from list
+        questionList.addListSelectionListener(e2 -> {
+            if (!e2.getValueIsAdjusting()) {
+                int sel = cbCorrectAnswer.getSelectedIndex();
+                for (int i = 0; i < 4; i++) answerBtns[i].setSelected(i == sel);
+            }
+        });
 
-        ModernButton btnClear = new ModernButton("СОЗДАТЬ НОВЫЙ", SECONDARY_BTN, SECONDARY_HOVER);
-        btnClear.addActionListener(e -> clearEditorForm());
+        form.add(correctCard);
+        form.add(Box.createVerticalStrut(10));
+
+        JScrollPane formScroll = new JScrollPane(form);
+        formScroll.setBorder(BorderFactory.createEmptyBorder());
+        formScroll.getViewport().setBackground(BG_COLOR);
+        formScroll.getVerticalScrollBar().setUnitIncrement(16);
+        content.add(formScroll, BorderLayout.CENTER);
+
+        // ── Action buttons bar ──
+        JPanel btnBar = new JPanel(new GridLayout(1, 3, 14, 0));
+        btnBar.setBackground(BG_COLOR);
+        btnBar.setBorder(new EmptyBorder(20, 0, 0, 0));
 
         ModernButton btnSave = new ModernButton("СОХРАНИТЬ", ACCENT_COLOR, ACCENT_HOVER);
         btnSave.addActionListener(e -> {
@@ -595,6 +757,8 @@ public class QuizAppGUI extends JFrame {
             else
                 quizManager.updateQuestion(new Question(currentEditingId, tfEditorQuestion.getText().trim(), opts, correctIndex));
             refreshEditorList();
+            // Sync radio buttons after refresh
+            for (int i = 0; i < 4; i++) answerBtns[i].setSelected(i == correctIndex);
         });
 
         ModernButton btnDelete = new ModernButton("УДАЛИТЬ", DANGER_COLOR, DANGER_HOVER);
@@ -607,17 +771,38 @@ public class QuizAppGUI extends JFrame {
             }
         });
 
-        ModernButton btnBack = new ModernButton("В ГЛАВНОЕ МЕНЮ", SECONDARY_BTN, SECONDARY_HOVER);
+        ModernButton btnBack = new ModernButton("← ГЛАВНОЕ МЕНЮ", SECONDARY_BTN, SECONDARY_HOVER);
         btnBack.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
 
-        btnPanel.add(btnClear); btnPanel.add(btnSave);
-        btnPanel.add(btnDelete); btnPanel.add(btnBack);
+        btnBar.add(btnSave);
+        btnBar.add(btnDelete);
+        btnBar.add(btnBack);
 
-        rightPanel.add(formWrapper, BorderLayout.CENTER);
-        rightPanel.add(btnPanel, BorderLayout.SOUTH);
-        panel.add(leftPanel, BorderLayout.WEST);
-        panel.add(rightPanel, BorderLayout.CENTER);
+        content.add(btnBar, BorderLayout.SOUTH);
+        panel.add(content, BorderLayout.CENTER);
+
         return panel;
+    }
+
+    /** Creates a styled form card container */
+    private JPanel createFormCard() {
+        JPanel card = new JPanel();
+        card.setBackground(CARD_BG);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(60, 60, 60), 1),
+                new EmptyBorder(20, 22, 20, 22)));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        return card;
+    }
+
+    /** Creates a styled label for a form section */
+    private JLabel createFieldLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setForeground(ACCENT_COLOR);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return lbl;
     }
 
     // ===================== ЭКРАН ТЕСТА =====================

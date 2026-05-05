@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Pro — Вход студента</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container center-flex">
+        <h1 class="title" style="font-size: 3rem;">ВОЙТИ В КОМНАТУ</h1>
+        <p class="error-msg" id="errorMsg"></p>
+        
+        <form id="joinForm" class="form-group">
+            <label>ВАШЕ ИМЯ:</label>
+            <input type="text" id="studentName" class="form-control" placeholder="Введите ваше имя..." required>
+            
+            <label style="margin-top: 1rem;">КОД КОМНАТЫ:</label>
+            <input type="text" id="roomCode" class="form-control" placeholder="Например: AB12CD" 
+                   style="font-family: monospace; font-size: 1.5rem; text-align: center; text-transform: uppercase;" required>
+            
+            <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">ВОЙТИ И НАЧАТЬ ТЕСТ</button>
+        </form>
+        
+        <a href="/" class="btn btn-secondary">НАЗАД</a>
+    </div>
+
+    <script th:src="@{/js/api.js}"></script>
+    <script>
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentName = document.getElementById('studentName').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            
+            try {
+                // Validate room via API
+                const res = await fetch(`/api/rooms/validate/${roomCode}`);
+                if(res.ok) {
+                    // Room is active! Save info to sessionStorage for the quiz page
+                    sessionStorage.setItem('studentName', studentName);
+                    sessionStorage.setItem('roomCode', roomCode);
+                    window.location.href = '/student/quiz';
+                } else {
+                    document.getElementById('errorMsg').innerText = 'Комната не найдена или закрыта.';
+                    document.getElementById('errorMsg').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('errorMsg').innerText = 'Ошибка соединения';
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

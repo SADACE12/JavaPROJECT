@@ -35,7 +35,7 @@ public class QuizController {
 
     @GetMapping("/results/room/{roomCode}")
     @Operation(summary = "Get all results for a room (teacher view)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<List<QuizResultResponse>> getResultsForRoom(@PathVariable String roomCode) {
         return ResponseEntity.ok(quizService.getResultsForRoom(roomCode));
     }

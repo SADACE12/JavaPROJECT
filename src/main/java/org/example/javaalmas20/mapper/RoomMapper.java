@@ -2,12 +2,22 @@ package org.example.javaalmas20.mapper;
 
 import org.example.javaalmas20.domain.entity.Room;
 import org.example.javaalmas20.dto.response.RoomResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface RoomMapper {
+/**
+ * Manual mapper: Room ↔ DTO.
+ */
+@Component
+public class RoomMapper {
 
-    @Mapping(source = "active", target = "active")
-    RoomResponse toResponse(Room room);
+    public RoomResponse toResponse(Room room) {
+        return RoomResponse.builder()
+                .id(room.getId())
+                .code(room.getCode())
+                .name(room.getName())
+                .createdBy(room.getCreatedBy())
+                .active(room.isActive())
+                .createdAt(room.getCreatedAt())
+                .build();
+    }
 }

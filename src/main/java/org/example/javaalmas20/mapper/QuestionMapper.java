@@ -3,35 +3,47 @@ package org.example.javaalmas20.mapper;
 import org.example.javaalmas20.domain.entity.Question;
 import org.example.javaalmas20.dto.request.QuestionRequest;
 import org.example.javaalmas20.dto.response.QuestionResponse;
-import org.mapstruct.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
- * MapStruct mapper: Question entity ↔ DTOs.
+ * Manual mapper: Question entity ↔ DTOs.
  */
-@Mapper(componentModel = "spring")
-public interface QuestionMapper {
+@Component
+public class QuestionMapper {
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    Question toEntity(QuestionRequest request);
+    public Question toEntity(QuestionRequest request) {
+        return Question.builder()
+                .questionText(request.getQuestionText())
+                .opt1(request.getOpt1())
+                .opt2(request.getOpt2())
+                .opt3(request.getOpt3())
+                .opt4(request.getOpt4())
+                .correctIndex(request.getCorrectIndex())
+                .build();
+    }
 
-    @Mapping(target = "options", expression = "java(mapOptions(question))")
-    QuestionResponse toResponse(Question question);
+    public QuestionResponse toResponse(Question question) {
+        return QuestionResponse.builder()
+                .id(question.getId())
+                .questionText(question.getQuestionText())
+                .options(List.of(
+                        question.getOpt1(),
+                        question.getOpt2(),
+                        question.getOpt3(),
+                        question.getOpt4()))
+                .correctIndex(question.getCorrectIndex())
+                .createdAt(question.getCreatedAt())
+                .build();
+    }
 
-    /**
-     * Updates an existing entity from a request DTO.
-     */
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateEntity(QuestionRequest request, @MappingTarget Question question);
-
-    default List<String> mapOptions(Question q) {
-        return List.of(q.getOpt1(), q.getOpt2(), q.getOpt3(), q.getOpt4());
+    public void updateEntity(QuestionRequest request, Question question) {
+        question.setQuestionText(request.getQuestionText());
+        question.setOpt1(request.getOpt1());
+        question.setOpt2(request.getOpt2());
+        question.setOpt3(request.getOpt3());
+        question.setOpt4(request.getOpt4());
+        question.setCorrectIndex(request.getCorrectIndex());
     }
 }

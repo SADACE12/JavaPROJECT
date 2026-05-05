@@ -11,9 +11,9 @@ import java.util.UUID;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, UUID> {
 
-    Optional<Room> findByCodeAndIsActiveTrue(String code);
+    Optional<Room> findByCodeAndActiveTrue(String code);
 
-    List<Room> findByCreatedByAndIsActiveTrueOrderByCreatedAtDesc(String createdBy);
+    List<Room> findByCreatedByAndActiveTrueOrderByCreatedAtDesc(String createdBy);
 
     boolean existsByCode(String code);
 }

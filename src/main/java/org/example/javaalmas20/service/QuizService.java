@@ -41,7 +41,7 @@ public class QuizService {
     public QuizSubmitResponse submitQuiz(SubmitQuizRequest request) {
         // Validate room exists and is active
         String code = request.getRoomCode().toUpperCase();
-        roomRepository.findByCodeAndIsActiveTrue(code)
+        roomRepository.findByCodeAndActiveTrue(code)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Room", "code", code + " (not found or closed)"));
 

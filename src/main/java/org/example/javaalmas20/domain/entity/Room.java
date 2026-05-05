@@ -14,7 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "rooms", indexes = {
         @Index(name = "idx_room_code", columnList = "code", unique = true),
-        @Index(name = "idx_room_active", columnList = "isActive")
+        @Index(name = "idx_room_active", columnList = "active")
 })
 @Getter
 @Setter
@@ -39,9 +39,9 @@ public class Room {
     @Column(name = "created_by", nullable = false)
     private String createdBy;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "active", nullable = false)
     @Builder.Default
-    private boolean isActive = true;
+    private boolean active = true;
 
     @CreationTimestamp
     @Column(updatable = false)

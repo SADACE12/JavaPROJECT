@@ -2,56 +2,68 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Pro — Панель преподавателя</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
-        .list-item { background: #2d2d2d; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
-        .badge { background: var(--accent-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .badge-close { background: var(--danger-color); cursor: pointer; border: none; color: white; }
-    </style>
 </head>
 <body>
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1 class="title" style="margin: 0; font-size: 2rem;">ПАНЕЛЬ ПРЕПОДАВАТЕЛЯ</h1>
-            <button onclick="logout()" class="btn btn-secondary" style="width: auto; max-width: none; margin: 0;">ВЫХОД</button>
+        <div class="dashboard-header">
+            <h1 class="title" style="font-size: 1.8rem;">📋 Панель преподавателя</h1>
+            <button onclick="logout()" class="btn btn-secondary">ВЫХОД</button>
         </div>
 
         <div class="dashboard-grid">
             <!-- Questions Section -->
             <div class="card">
-                <h2>Управление вопросами</h2>
-                <button onclick="toggleQForm()" class="btn btn-blue" style="margin: 1rem 0; width: auto; max-width: none;">+ Добавить вопрос</button>
-                
-                <form id="qForm" class="form-group" style="display: none; max-width: 100%; border-bottom: 1px solid #3c3c3c; padding-bottom: 1rem; margin-bottom: 1rem;">
-                    <input type="text" id="qText" class="form-control" placeholder="Текст вопроса" required style="margin-bottom: 0.5rem;">
-                    <input type="text" id="opt1" class="form-control" placeholder="Вариант 1 (Правильный по умолчанию)" required style="margin-bottom: 0.5rem;">
-                    <input type="text" id="opt2" class="form-control" placeholder="Вариант 2" required style="margin-bottom: 0.5rem;">
-                    <input type="text" id="opt3" class="form-control" placeholder="Вариант 3" required style="margin-bottom: 0.5rem;">
-                    <input type="text" id="opt4" class="form-control" placeholder="Вариант 4" required style="margin-bottom: 0.5rem;">
-                    <label>Правильный вариант (0-3):</label>
+                <h2>📝 Управление вопросами</h2>
+                <button onclick="toggleQForm()" class="btn btn-blue" style="width: auto; max-width: none; margin: 1rem 0; padding: 0.6rem 1.2rem; font-size: 0.8rem;">+ ДОБАВИТЬ ВОПРОС</button>
+
+                <form id="qForm" class="form-group" style="display: none; max-width: 100%; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--card-border);">
+                    <label for="qText">Текст вопроса</label>
+                    <input type="text" id="qText" class="form-control" placeholder="Введите вопрос..." required>
+
+                    <label for="opt1">Вариант 1 (по умолчанию правильный)</label>
+                    <input type="text" id="opt1" class="form-control" placeholder="Вариант 1" required>
+
+                    <label for="opt2">Вариант 2</label>
+                    <input type="text" id="opt2" class="form-control" placeholder="Вариант 2" required>
+
+                    <label for="opt3">Вариант 3</label>
+                    <input type="text" id="opt3" class="form-control" placeholder="Вариант 3" required>
+
+                    <label for="opt4">Вариант 4</label>
+                    <input type="text" id="opt4" class="form-control" placeholder="Вариант 4" required>
+
+                    <label for="correctIdx">Правильный вариант (0–3)</label>
                     <input type="number" id="correctIdx" class="form-control" min="0" max="3" value="0" required>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Сохранить</button>
+
+                    <button type="submit" class="btn btn-primary" style="max-width: 100%;">СОХРАНИТЬ</button>
                 </form>
 
-                <div id="qList"></div>
+                <div id="qList"><p class="empty-state">Загрузка вопросов...</p></div>
             </div>
 
             <!-- Rooms Section -->
             <div class="card">
-                <h2>Активные комнаты</h2>
-                <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                    <input type="text" id="newRoomName" class="form-control" placeholder="Название комнаты">
-                    <button onclick="createRoom()" class="btn btn-primary" style="width: auto; margin: 0;">Создать</button>
-                </div>
-                <div id="roomList"></div>
+                <h2>🏠 Активные комнаты</h2>
 
-                <h2 style="margin-top: 2rem;">Результаты по комнате</h2>
-                <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                    <input type="text" id="checkRoomCode" class="form-control" placeholder="Код комнаты (напр. AB12CD)">
-                    <button onclick="loadResults()" class="btn btn-blue" style="width: auto; margin: 0;">Показать</button>
+                <div class="inline-form">
+                    <input type="text" id="newRoomName" class="form-control" placeholder="Название комнаты">
+                    <button onclick="createRoom()" class="btn btn-primary">СОЗДАТЬ</button>
                 </div>
+
+                <div id="roomList"><p class="empty-state">Загрузка комнат...</p></div>
+
+                <hr class="section-divider">
+
+                <h2>📊 Результаты по комнате</h2>
+
+                <div class="inline-form">
+                    <input type="text" id="checkRoomCode" class="form-control" placeholder="Код комнаты (AB12CD)" style="text-transform: uppercase;">
+                    <button onclick="loadResults()" class="btn btn-blue">ПОКАЗАТЬ</button>
+                </div>
+
                 <div id="resultsList"></div>
             </div>
         </div>
@@ -91,14 +103,18 @@
 
         async function loadQuestions() {
             const list = document.getElementById('qList');
-            list.innerHTML = 'Загрузка...';
+            list.innerHTML = '<p class="empty-state">Загрузка...</p>';
             try {
                 const qs = await apiCall('/questions');
                 list.innerHTML = '';
+                if(qs.length === 0) {
+                    list.innerHTML = '<p class="empty-state">Нет вопросов. Добавьте первый!</p>';
+                    return;
+                }
                 qs.forEach(q => {
                     list.innerHTML += `<div class="list-item">
                         <span>${q.questionText}</span>
-                        <button class="badge badge-close" onclick="deleteQuestion('${q.id}')">X</button>
+                        <button class="badge-close" onclick="deleteQuestion('${q.id}')">✕</button>
                     </div>`;
                 });
             } catch(e) {}
@@ -117,14 +133,17 @@
             try {
                 const rooms = await apiCall('/rooms/my');
                 list.innerHTML = '';
-                if(rooms.length === 0) list.innerHTML = '<p style="color:#aaa;">Нет активных комнат</p>';
+                if(rooms.length === 0) {
+                    list.innerHTML = '<p class="empty-state">Нет активных комнат</p>';
+                    return;
+                }
                 rooms.forEach(r => {
                     list.innerHTML += `<div class="list-item">
                         <div>
-                            <span class="badge" style="margin-right:0.5rem; font-family:monospace;">${r.roomCode}</span>
+                            <span class="badge" style="margin-right: 0.6rem; font-family: monospace;">${r.code}</span>
                             ${r.name}
                         </div>
-                        <button class="badge badge-close" onclick="closeRoom('${r.roomCode}')">Закрыть</button>
+                        <button class="badge-close" onclick="closeRoom('${r.code}')">Закрыть</button>
                     </div>`;
                 });
             } catch(e) {}
@@ -150,19 +169,25 @@
             const code = document.getElementById('checkRoomCode').value.toUpperCase();
             if(!code) return;
             const list = document.getElementById('resultsList');
-            list.innerHTML = 'Загрузка...';
+            list.innerHTML = '<p class="empty-state">Загрузка...</p>';
             try {
                 const res = await apiCall(`/quiz/results/room/${code}`);
                 list.innerHTML = '';
-                if(res.length === 0) list.innerHTML = '<p style="color:#aaa;">Нет результатов</p>';
+                if(res.length === 0) {
+                    list.innerHTML = '<p class="empty-state">Нет результатов</p>';
+                    return;
+                }
                 res.forEach(r => {
+                    const gradeColor = {
+                        'A': '#22c55e', 'B': '#3b82f6', 'C': '#f59e0b', 'D': '#f97316', 'F': '#ef4444'
+                    }[r.grade] || 'var(--accent-color)';
                     list.innerHTML += `<div class="list-item">
                         <span><b>${r.studentName}</b></span>
-                        <span style="color: ${r.grade==='F'?'#dc3545':'#28a745'}; font-weight:bold;">${r.grade} (${r.percentage}%)</span>
+                        <span style="color: ${gradeColor}; font-weight: 700;">${r.grade} (${r.percentage}%)</span>
                     </div>`;
                 });
             } catch(e) {
-                list.innerHTML = '<p style="color:red;">Ошибка загрузки</p>';
+                list.innerHTML = '<p class="empty-state" style="color: var(--danger-color);">Ошибка загрузки</p>';
             }
         }
 

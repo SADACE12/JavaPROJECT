@@ -2,26 +2,33 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Pro — Вход</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container center-flex">
-        <h1 class="title" style="font-size: 2.5rem;">ВХОД ДЛЯ ПРЕПОДАВАТЕЛЯ</h1>
-        <p class="error-msg" id="errorMsg"></p>
-        
-        <form id="loginForm" class="form-group">
-            <label>Логин</label>
-            <input type="text" id="username" class="form-control" required>
-            
-            <label style="margin-top: 1rem;">Пароль</label>
-            <input type="password" id="password" class="form-control" required>
-            
-            <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">ВОЙТИ</button>
-        </form>
-        
-        <a href="/register" style="color: var(--accent-color); text-decoration: none;">Нет аккаунта? Зарегистрироваться</a>
-        <a href="/" style="color: var(--secondary-text); text-decoration: none; margin-top: 1rem;">← Назад</a>
+    <div class="center-flex">
+        <div class="auth-card">
+            <div class="auth-icon">🔑</div>
+            <h1 class="auth-title">Вход</h1>
+            <p class="auth-subtitle">Войдите в панель преподавателя</p>
+
+            <p class="error-msg" id="errorMsg"></p>
+
+            <form id="loginForm" class="form-group">
+                <label for="username">Логин</label>
+                <input type="text" id="username" class="form-control" placeholder="Введите логин..." required>
+
+                <label for="password">Пароль</label>
+                <input type="password" id="password" class="form-control" placeholder="Введите пароль..." required>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">ВОЙТИ</button>
+            </form>
+
+            <a href="/register" class="auth-link">Нет аккаунта? Зарегистрироваться →</a>
+            <br>
+            <a href="/" class="auth-back-link">← Назад на главную</a>
+        </div>
     </div>
 
     <script th:src="@{/js/api.js}"></script>
@@ -30,7 +37,13 @@
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> ВХОД...';
+            errorMsg.style.display = 'none';
+
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -42,12 +55,17 @@
                     setToken(data.accessToken);
                     window.location.href = '/teacher/dashboard';
                 } else {
-                    document.getElementById('errorMsg').innerText = 'Неверный логин или пароль';
-                    document.getElementById('errorMsg').style.display = 'block';
+                    const errData = await response.json().catch(() => null);
+                    errorMsg.innerText = errData?.message || 'Неверный логин или пароль';
+                    errorMsg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'ВОЙТИ';
                 }
             } catch (err) {
-                document.getElementById('errorMsg').innerText = 'Ошибка соединения с сервером';
-                document.getElementById('errorMsg').style.display = 'block';
+                errorMsg.innerText = 'Ошибка соединения с сервером';
+                errorMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'ВОЙТИ';
             }
         });
     </script>

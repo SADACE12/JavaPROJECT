@@ -37,7 +37,7 @@ public class RoomService {
                 .code(code)
                 .name(request.getName())
                 .createdBy(teacherName)
-                .isActive(true)
+                .active(true)
                 .build();
         Room saved = roomRepository.save(room);
         auditService.logAction(teacherName, "ROOM_CREATED",
@@ -46,7 +46,7 @@ public class RoomService {
     }
 
     public RoomResponse validateRoomCode(String code) {
-        Room room = roomRepository.findByCodeAndIsActiveTrue(code.toUpperCase())
+        Room room = roomRepository.findByCodeAndActiveTrue(code.toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Room", "code", code + " (not found or closed)"));
         return roomMapper.toResponse(room);
@@ -54,7 +54,7 @@ public class RoomService {
 
     @Transactional
     public void closeRoom(String code) {
-        Room room = roomRepository.findByCodeAndIsActiveTrue(code.toUpperCase())
+        Room room = roomRepository.findByCodeAndActiveTrue(code.toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Room", "code", code));
         room.setActive(false);
         roomRepository.save(room);
@@ -63,7 +63,7 @@ public class RoomService {
     }
 
     public List<RoomResponse> getActiveRooms(String teacherName) {
-        return roomRepository.findByCreatedByAndIsActiveTrueOrderByCreatedAtDesc(teacherName)
+        return roomRepository.findByCreatedByAndActiveTrueOrderByCreatedAtDesc(teacherName)
                 .stream()
                 .map(roomMapper::toResponse)
                 .collect(Collectors.toList());

@@ -2,20 +2,21 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Pro — Результат</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container center-flex">
-        <h1 class="title" style="font-size: 3.5rem;">ТЕСТ ЗАВЕРШЕН!</h1>
-        
-        <div class="card" style="width: 100%; max-width: 500px; text-align: center; margin-top: 2rem;">
-            <h2 id="studentNameDisplay" style="color: var(--secondary-text); margin-bottom: 1rem;"></h2>
-            <div style="font-size: 5rem; font-weight: bold; color: var(--accent-color); margin: 1rem 0;" id="gradeDisplay">A</div>
-            <p style="font-size: 1.5rem;" id="scoreDisplay">Счет: 10/10 (100%)</p>
+    <div class="center-flex">
+        <h1 class="title" style="font-size: 2.5rem;">ТЕСТ ЗАВЕРШЕН! 🎉</h1>
+
+        <div class="result-card">
+            <p class="result-name" id="studentNameDisplay"></p>
+            <div class="result-grade" id="gradeDisplay">A</div>
+            <p class="result-score" id="scoreDisplay">Счет: 10/10 (100%)</p>
         </div>
-        
-        <a href="/" class="btn btn-primary" style="margin-top: 2rem;">НА ГЛАВНУЮ</a>
+
+        <a href="/" class="btn btn-primary" style="margin-top: 1.5rem;">НА ГЛАВНУЮ</a>
     </div>
 
     <script>
@@ -26,11 +27,10 @@
             const data = JSON.parse(resStr);
             document.getElementById('studentNameDisplay').innerText = data.studentName;
             document.getElementById('gradeDisplay').innerText = data.grade;
-            document.getElementById('scoreDisplay').innerText = `Счет: ${data.score}/${data.totalQuestions} (${data.percentage.toFixed(1)}%)`;
-            
-            // Set color based on grade
+            document.getElementById('scoreDisplay').innerText = `Счет: ${data.score}/${data.total} (${data.percentage.toFixed(1)}%)`;
+
             const gradeColor = {
-                'A': '#28a745', 'B': '#17a2b8', 'C': '#ffc107', 'D': '#fd7e14', 'F': '#dc3545'
+                'A': '#22c55e', 'B': '#3b82f6', 'C': '#f59e0b', 'D': '#f97316', 'F': '#ef4444'
             }[data.grade] || 'var(--accent-color)';
             document.getElementById('gradeDisplay').style.color = gradeColor;
         }

@@ -31,7 +31,7 @@ public class RoomController {
 
     @PostMapping
     @Operation(summary = "Create a new room (teacher only)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody CreateRoomRequest request,
                                                    @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,7 +46,7 @@ public class RoomController {
 
     @PostMapping("/{code}/close")
     @Operation(summary = "Close a room (teacher only)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<Void> closeRoom(@PathVariable String code) {
         roomService.closeRoom(code);
         return ResponseEntity.noContent().build();
@@ -54,7 +54,7 @@ public class RoomController {
 
     @GetMapping("/my")
     @Operation(summary = "Get my active rooms (teacher)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<List<RoomResponse>> getMyRooms(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(roomService.getActiveRooms(userDetails.getUsername()));
     }

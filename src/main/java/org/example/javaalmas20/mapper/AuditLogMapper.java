@@ -2,13 +2,25 @@ package org.example.javaalmas20.mapper;
 
 import org.example.javaalmas20.domain.entity.AuditLog;
 import org.example.javaalmas20.dto.response.AuditLogResponse;
-import org.mapstruct.Mapper;
+import org.springframework.stereotype.Component;
 
 /**
- * MapStruct mapper: AuditLog ↔ DTO.
+ * Manual mapper: AuditLog ↔ DTO.
  */
-@Mapper(componentModel = "spring")
-public interface AuditLogMapper {
+@Component
+public class AuditLogMapper {
 
-    AuditLogResponse toResponse(AuditLog auditLog);
+    public AuditLogResponse toResponse(AuditLog auditLog) {
+        return AuditLogResponse.builder()
+                .id(auditLog.getId())
+                .userId(auditLog.getUserId())
+                .username(auditLog.getUsername())
+                .action(auditLog.getAction())
+                .entityType(auditLog.getEntityType())
+                .entityId(auditLog.getEntityId())
+                .details(auditLog.getDetails())
+                .ipAddress(auditLog.getIpAddress())
+                .createdAt(auditLog.getCreatedAt())
+                .build();
+    }
 }

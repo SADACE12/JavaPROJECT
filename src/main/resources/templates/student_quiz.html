@@ -2,23 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Pro — Тест</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
-        .options-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 600px; margin: 2rem auto; }
-        .option-btn { background-color: var(--card-bg); border: 2px solid #3c3c3c; border-radius: 8px; padding: 1.5rem; color: var(--text-color); font-size: 1.2rem; cursor: pointer; text-align: left; transition: all 0.2s; }
-        .option-btn:hover { border-color: var(--accent-color); }
-        .option-btn.selected { background-color: var(--accent-color); border-color: var(--accent-color); color: white; }
-    </style>
 </head>
 <body>
-    <div class="container" style="text-align: center; margin-top: 5rem;">
-        <h2 id="progressLabel" style="color: var(--secondary-text); margin-bottom: 1rem;">Загрузка...</h2>
-        <h1 id="questionText" style="font-size: 2.5rem; margin-bottom: 2rem;"></h1>
-        
+    <div class="container quiz-container">
+        <h2 class="quiz-progress" id="progressLabel">Загрузка...</h2>
+        <h1 class="quiz-question" id="questionText"></h1>
+
         <div class="options-container" id="optionsContainer"></div>
-        
-        <button id="nextBtn" class="btn btn-primary" style="margin-top: 2rem; display: none;" onclick="submitAnswer()">ПОДТВЕРДИТЬ ОТВЕТ</button>
+
+        <button id="nextBtn" class="btn btn-primary" style="display: none; margin: 0 auto;" onclick="submitAnswer()">ПОДТВЕРДИТЬ ОТВЕТ</button>
     </div>
 
     <script th:src="@{/js/api.js}"></script>
@@ -40,7 +35,7 @@
                 const res = await fetch('/api/questions/public');
                 if(!res.ok) throw new Error("Failed to load");
                 questions = await res.json();
-                
+
                 if(questions.length === 0) {
                     document.getElementById('progressLabel').innerText = 'Нет доступных вопросов';
                     return;
@@ -56,18 +51,18 @@
                 finishQuiz();
                 return;
             }
-            
+
             const q = questions[currentIdx];
             document.getElementById('progressLabel').innerText = `Вопрос ${currentIdx + 1} из ${questions.length}`;
             document.getElementById('questionText').innerText = q.questionText;
-            
+
             const container = document.getElementById('optionsContainer');
             container.innerHTML = '';
-            
-            const opts = [q.opt1, q.opt2, q.opt3, q.opt4];
+
+            const opts = q.options;
             selectedIndex = -1;
             document.getElementById('nextBtn').style.display = 'none';
-            
+
             opts.forEach((opt, idx) => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
@@ -75,13 +70,18 @@
                 btn.onclick = () => selectOption(idx, btn);
                 container.appendChild(btn);
             });
+
+            // Re-animate
+            container.style.animation = 'none';
+            container.offsetHeight;
+            container.style.animation = 'slideUp 0.3s ease-out';
         }
 
         function selectOption(idx, btnElem) {
             selectedIndex = idx;
             document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btnElem.classList.add('selected');
-            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'inline-flex';
         }
 
         function submitAnswer() {
@@ -92,18 +92,18 @@
         }
 
         async function finishQuiz() {
-            document.getElementById('progressLabel').innerText = 'Отправка результатов...';
+            document.getElementById('progressLabel').innerHTML = '<span class="spinner"></span> Отправка результатов...';
             document.getElementById('questionText').innerText = '';
             document.getElementById('optionsContainer').innerHTML = '';
             document.getElementById('nextBtn').style.display = 'none';
-            
+
             try {
                 const res = await fetch('/api/quiz/submit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ studentName, roomCode, answers })
                 });
-                
+
                 if(res.ok) {
                     const resultData = await res.json();
                     sessionStorage.setItem('quizResult', JSON.stringify(resultData));

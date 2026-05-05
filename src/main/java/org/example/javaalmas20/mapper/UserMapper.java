@@ -4,31 +4,45 @@ import org.example.javaalmas20.domain.entity.Role;
 import org.example.javaalmas20.domain.entity.User;
 import org.example.javaalmas20.dto.request.RegisterRequest;
 import org.example.javaalmas20.dto.response.UserResponse;
-import org.mapstruct.*;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * MapStruct mapper: User ↔ DTO.
+ * Manual mapper: User ↔ DTO (replaces MapStruct).
  */
-@Mapper(componentModel = "spring")
-public interface UserMapper {
+@Component
+public class UserMapper {
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "roles", ignore = true)
-    @Mapping(target = "enabled", constant = "true")
-    @Mapping(target = "accountNonLocked", constant = "true")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "gdprDeleteRequested", constant = "false")
-    @Mapping(target = "gdprDeleteRequestedAt", ignore = true)
-    User toEntity(RegisterRequest request);
+    public User toEntity(RegisterRequest request) {
+        return User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .enabled(true)
+                .accountNonLocked(true)
+                .gdprDeleteRequested(false)
+                .build();
+    }
 
-    @Mapping(target = "roles", expression = "java(mapRoles(user.getRoles()))")
-    UserResponse toResponse(User user);
+    public UserResponse toResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .enabled(user.isEnabled())
+                .roles(mapRoles(user.getRoles()))
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
 
-    default Set<String> mapRoles(Set<Role> roles) {
+    private Set<String> mapRoles(Set<Role> roles) {
         if (roles == null) return Set.of();
         return roles.stream()
                 .map(r -> r.getName().name())

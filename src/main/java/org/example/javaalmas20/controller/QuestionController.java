@@ -30,7 +30,7 @@ public class QuestionController {
 
     @GetMapping
     @Operation(summary = "Get all questions (Admin/Moderator)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<List<QuestionResponse>> getAll() {
         return ResponseEntity.ok(questionService.getAll());
     }
@@ -49,14 +49,14 @@ public class QuestionController {
 
     @PostMapping
     @Operation(summary = "Create a new question (teacher only)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<QuestionResponse> create(@Valid @RequestBody QuestionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(questionService.create(request));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a question (teacher only)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<QuestionResponse> update(@PathVariable UUID id,
                                                    @Valid @RequestBody QuestionRequest request) {
         return ResponseEntity.ok(questionService.update(id, request));
@@ -64,7 +64,7 @@ public class QuestionController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a question (teacher only)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR', 'USER')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         questionService.delete(id);
         return ResponseEntity.noContent().build();

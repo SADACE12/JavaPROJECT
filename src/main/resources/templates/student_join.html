@@ -2,26 +2,32 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Pro — Вход студента</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container center-flex">
-        <h1 class="title" style="font-size: 3rem;">ВОЙТИ В КОМНАТУ</h1>
-        <p class="error-msg" id="errorMsg"></p>
-        
-        <form id="joinForm" class="form-group">
-            <label>ВАШЕ ИМЯ:</label>
-            <input type="text" id="studentName" class="form-control" placeholder="Введите ваше имя..." required>
-            
-            <label style="margin-top: 1rem;">КОД КОМНАТЫ:</label>
-            <input type="text" id="roomCode" class="form-control" placeholder="Например: AB12CD" 
-                   style="font-family: monospace; font-size: 1.5rem; text-align: center; text-transform: uppercase;" required>
-            
-            <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">ВОЙТИ И НАЧАТЬ ТЕСТ</button>
-        </form>
-        
-        <a href="/" class="btn btn-secondary">НАЗАД</a>
+    <div class="center-flex">
+        <div class="auth-card">
+            <div class="auth-icon">🎓</div>
+            <h1 class="auth-title">Войти в комнату</h1>
+            <p class="auth-subtitle">Введите своё имя и код комнаты от преподавателя</p>
+
+            <p class="error-msg" id="errorMsg"></p>
+
+            <form id="joinForm" class="form-group">
+                <label for="studentName">Ваше имя</label>
+                <input type="text" id="studentName" class="form-control" placeholder="Введите ваше имя..." required>
+
+                <label for="roomCode">Код комнаты</label>
+                <input type="text" id="roomCode" class="form-control" placeholder="Например: AB12CD"
+                       style="font-family: 'Inter', monospace; font-size: 1.3rem; text-align: center; text-transform: uppercase; letter-spacing: 0.15em;" required>
+
+                <button type="submit" class="btn btn-primary" id="joinBtn">ВОЙТИ И НАЧАТЬ ТЕСТ</button>
+            </form>
+
+            <a href="/" class="auth-back-link">← Назад на главную</a>
+        </div>
     </div>
 
     <script th:src="@{/js/api.js}"></script>
@@ -30,22 +36,30 @@
             e.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
             const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
-            
+            const btn = document.getElementById('joinBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> ПРОВЕРКА...';
+            errorMsg.style.display = 'none';
+
             try {
-                // Validate room via API
                 const res = await fetch(`/api/rooms/validate/${roomCode}`);
                 if(res.ok) {
-                    // Room is active! Save info to sessionStorage for the quiz page
                     sessionStorage.setItem('studentName', studentName);
                     sessionStorage.setItem('roomCode', roomCode);
                     window.location.href = '/student/quiz';
                 } else {
-                    document.getElementById('errorMsg').innerText = 'Комната не найдена или закрыта.';
-                    document.getElementById('errorMsg').style.display = 'block';
+                    errorMsg.innerText = 'Комната не найдена или закрыта.';
+                    errorMsg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'ВОЙТИ И НАЧАТЬ ТЕСТ';
                 }
             } catch (err) {
-                document.getElementById('errorMsg').innerText = 'Ошибка соединения';
-                document.getElementById('errorMsg').style.display = 'block';
+                errorMsg.innerText = 'Ошибка соединения с сервером';
+                errorMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'ВОЙТИ И НАЧАТЬ ТЕСТ';
             }
         });
     </script>

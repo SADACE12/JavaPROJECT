@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public Student API
                         .requestMatchers("/api/questions/public", "/api/rooms/validate/**", "/api/quiz/submit").permitAll()
+                        // H2 Console (dev)
+                        .requestMatchers("/h2-console/**").permitAll()
                         // UI routes and static resources
                         .requestMatchers("/", "/login", "/register", "/teacher/**", "/student/**", "/css/**", "/js/**").permitAll()
                         // Admin endpoints
@@ -51,7 +53,8 @@ public class SecurityConfig {
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
     }
